@@ -1,0 +1,5 @@
+node_modules/
+.env
+Photos-3-001/
+*.mp3
+CLAUDE.md*

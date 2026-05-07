@@ -1,0 +1,19 @@
+{
+  "name": "aniversario-duda",
+  "version": "1.0.0",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node api/index.js",
+    "dev": "node api/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@vercel/blob": "^0.27.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.11.5"
+  }
+}

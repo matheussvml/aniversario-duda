@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feliz Aniversário, Duda! 🎂</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <button class="music-btn" id="musicBtn" onclick="toggleMusic()" title="Tocar nossa música" aria-label="Tocar nossa música">
+    <span id="musicIcon">♪</span>
+  </button>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <button class="tab active" data-tab="inicio" onclick="goTo('inicio')">🏠 Início</button>
+      <button class="tab" data-tab="historia" onclick="goTo('historia')">💫 Nossa História</button>
+      <button class="tab" data-tab="galeria" onclick="goTo('galeria')">🖼️ Galeria</button>
+      <button class="tab" data-tab="carta" onclick="goTo('carta')">💌 Carta</button>
+      <button class="tab" data-tab="amote" onclick="goTo('amote')">❤️ Por Que Te Amo</button>
+      <button class="tab" data-tab="quiz" onclick="goTo('quiz')">🎯 Quiz</button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- INÍCIO -->
+    <section id="inicio" class="page active">
+      <div class="hero">
+        <div id="petals" class="petals"></div>
+        <div class="hero-inner">
+          <p class="hero-from">do seu Momo, com amor 💕</p>
+          <h1 class="hero-title">Feliz Aniversário</h1>
+          <h1 class="hero-name">Duda 🌹</h1>
+          <p class="hero-date">05 de Maio</p>
+          <div class="hero-counter" id="daysCounter"></div>
+          <button class="hero-btn" onclick="goTo('historia')">Explorar Nossa História ✨</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOSSA HISTÓRIA -->
+    <section id="historia" class="page">
+      <div class="section-head">
+        <h2>Nossa História</h2>
+        <p class="section-sub">Cada momento que fez parte de nós</p>
+      </div>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <!-- GALERIA -->
+    <section id="galeria" class="page">
+      <div class="section-head">
+        <h2>Galeria</h2>
+        <p class="section-sub">Todas as nossas memórias</p>
+        <button class="upload-trigger-btn" onclick="openUploadModal()">📷 Enviar Foto</button>
+      </div>
+      <div id="uploadedSection" class="uploaded-section" style="display:none">
+        <p class="uploaded-section-title">Fotos de Vocês 💕</p>
+        <div class="gallery" id="uploadedGallery"></div>
+      </div>
+      <div class="gallery" id="gallery"></div>
+    </section>
+
+    <!-- CARTA -->
+    <section id="carta" class="page">
+      <div class="section-head">
+        <h2>Uma Carta Pra Você</h2>
+        <p class="section-sub">do Matheus, com amor</p>
+      </div>
+      <div class="letter-wrap">
+        <div class="letter">
+          <div class="letter-photos">
+            <div class="letter-photo-frame"><img src="photos-3-001/20260118_173125.jpg" alt="" loading="lazy"></div>
+            <div class="letter-photo-frame rot-left"><img src="photos-3-001/20260125_220241.jpg" alt="" loading="lazy"></div>
+            <div class="letter-photo-frame rot-right"><img src="photos-3-001/20260207_231528.jpg" alt="" loading="lazy"></div>
+            <div class="letter-photo-frame"><img src="photos-3-001/IMG-20260317-WA0160.jpg" alt="" loading="lazy"></div>
+            <div class="letter-photo-frame rot-left"><img src="photos-3-001/20260412_170652.jpg" alt="" loading="lazy"></div>
+            <div class="letter-photo-frame rot-right"><img src="photos-3-001/IMG-20260421-WA0238.jpg" alt="" loading="lazy"></div>
+          </div>
+          <div class="letter-body">
+            <p class="salutation">Minha Duda (Minha Momozi💕),</p>
+            <p>Hoje é o seu dia, e eu quero que você saiba o quanto você é especial pra mim.</p>
+            <p>Desde aquele 18 de janeiro de 2026, quando a gente teve nosso primeiro beijo, minha vida nunca mais foi a mesma. Você entrou com aquela espontaneidade que tanto amo, com aqueles olhos que brilham mais do que qualquer coisa nesse mundo, e foi transformando tudo ao redor só de existir.</p>
+            <p>Eu poderia ficar aqui a noite toda listando coisas que eu amo em você (e tem uma aba inteira pra isso kdjsakjdaskj), mas o que mais me move é a simplicidade com que você me faz sentir amado. Você cuida de mim mesmo quando eu fico bicudo. Você fica animadinha quando fala das suas coisinhas. Você me olha como se eu fosse a coisa mais importante do mundo.</p>
+            <p>E eu juro que não sei como mereci isso.</p>
+            <p>Nesses meses juntos, a gente criou tanta história. Primeiro beijo, primeiro encontro, primeiro mês, primeiro show, primeira praia, primeiro sushi, primeiro cinema... cada "primeiro" ao seu lado se tornou meu favorito.</p>
+            <p>Você é a pessoa que eu quero ao meu lado pelo resto da minha vida. Não é força de expressão. É a coisa mais certa que eu já senti.</p>
+            <p>Feliz aniversário, meu amor. Que esse dia seja tão especial quanto você é pra mim.</p>
+            <div class="letter-sig">
+              <p>Com todo o amor que eu tenho,</p>
+              <p class="sig-name">Matheus, o seu Momo 💕</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- POR QUE TE AMO -->
+    <section id="amote" class="page">
+      <div class="section-head">
+        <h2>Por Que Eu Te Amo</h2>
+        <p class="section-sub">Só algumas das infinitas razões</p>
+      </div>
+      <div class="reasons" id="reasons"></div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="quiz" class="page">
+      <div class="section-head">
+        <h2>Quiz do Casal</h2>
+        <p class="section-sub">Quanto você sabe sobre a nossa história?</p>
+      </div>
+      <div class="quiz-wrap" id="quizWrap"></div>
+    </section>
+
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox hidden" onclick="closeLb(event)">
+    <button class="lb-close" onclick="closeLb()">✕</button>
+    <button class="lb-prev" onclick="prevLb(event)">‹</button>
+    <button class="lb-next" onclick="nextLb(event)">›</button>
+    <div class="lb-media" onclick="event.stopPropagation()">
+      <img id="lbImg" src="" alt="">
+      <video id="lbVid" controls></video>
+    </div>
+    <p id="lbCaption" class="lb-caption"></p>
+  </div>
+
+  <audio id="bgMusic" loop preload="none">
+    <source src="Rubel%20-%20Quando%20Bate%20Aquela%20Saudade%20%5BClipe%20Oficial%5D%20-%20Rubel%20(youtube).mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Modal de Upload -->
+  <div id="uploadModal" class="modal-overlay hidden" onclick="closeUploadModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeUploadModal()">✕</button>
+      <h3 class="modal-title">Enviar uma Foto 💕</h3>
+
+      <div class="upload-dropzone" id="uploadDropzone" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" accept="image/*,video/*" onchange="previewFile()" hidden multiple>
+        <div id="uploadPreview">
+          <span class="upload-icon">📷</span>
+          <p>Clique para escolher fotos ou vídeos</p>
+          <p class="upload-hint">JPG, PNG, MP4 até 50MB</p>
+        </div>
+      </div>
+
+      <input type="text" id="captionInput" placeholder="Legenda (opcional)" class="upload-input" maxlength="500">
+
+      <select id="uploadedByInput" class="upload-input">
+        <option value="Matheus">Sou o Matheus</option>
+        <option value="Duda">Sou a Duda 🌹</option>
+      </select>
+
+      <input type="password" id="pinInput" placeholder="PIN de acesso" class="upload-input">
+
+      <button class="upload-submit-btn" id="uploadSubmitBtn" onclick="submitUpload()">Enviar 💕</button>
+      <p id="uploadStatus" class="upload-status"></p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
