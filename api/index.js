@@ -1,7 +1,8 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') })
 
 const express = require('express')
-const { handleUpload, del } = require('@vercel/blob')
+const { del } = require('@vercel/blob')
+const { handleUpload } = require('@vercel/blob/client')
 const path = require('path')
 const pool = require('../lib/db')
 
