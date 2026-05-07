@@ -1,8 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') })
 
 const express = require('express')
-const multer  = require('multer')
-const { put, del } = require('@vercel/blob')
+const { handleUpload, del } = require('@vercel/blob')
 const path = require('path')
 const pool = require('../lib/db')
 
@@ -10,22 +9,9 @@ const app = express()
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Serve static files when running locally (npm start)
 if (process.env.NODE_ENV !== 'production') {
   app.use(express.static(path.join(__dirname, '..')))
 }
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
-      cb(null, true)
-    } else {
-      cb(new Error('Apenas imagens e vídeos são permitidos'))
-    }
-  }
-})
 
 function requirePin(req, res, next) {
   const pin = req.headers['x-upload-pin'] || req.body?.pin
@@ -35,7 +21,7 @@ function requirePin(req, res, next) {
   next()
 }
 
-// GET /api/photos — retorna todas as fotos enviadas
+// GET /api/photos
 app.get('/api/photos', async (_req, res) => {
   try {
     const [rows] = await pool.query(
@@ -48,36 +34,45 @@ app.get('/api/photos', async (_req, res) => {
   }
 })
 
-// POST /api/upload — faz upload de uma foto (exige PIN)
-app.post('/api/upload', requirePin, upload.single('photo'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Nenhum arquivo enviado' })
-  }
+// POST /api/upload — client-side upload (arquivo vai direto do browser ao Blob, não passa pela função)
+app.post('/api/upload', async (req, res) => {
   try {
-    const ext = path.extname(req.file.originalname)
-    const safeName = Date.now() + '-' + Math.random().toString(36).slice(2) + ext
-
-    const blob = await put(safeName, req.file.buffer, {
-      access: 'public',
-      contentType: req.file.mimetype
+    const jsonResponse = await handleUpload({
+      body: req.body,
+      request: req,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        const payload = JSON.parse(clientPayload || '{}')
+        if (!process.env.UPLOAD_PIN || payload.pin !== process.env.UPLOAD_PIN) {
+          throw new Error('PIN incorreto')
+        }
+        return {
+          allowedContentTypes: [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic',
+            'video/mp4', 'video/quicktime', 'video/webm',
+          ],
+          maximumSizeInBytes: 100 * 1024 * 1024,
+          tokenPayload: JSON.stringify({
+            caption:    (payload.caption || '').slice(0, 500),
+            uploadedBy: payload.uploadedBy === 'Duda' ? 'Duda' : 'Matheus',
+          }),
+        }
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        const payload = JSON.parse(tokenPayload || '{}')
+        await pool.query(
+          'INSERT INTO uploaded_photos (filename, url, caption, uploaded_by) VALUES (?, ?, ?, ?)',
+          [blob.pathname, blob.url, payload.caption || '', payload.uploadedBy || 'Matheus']
+        )
+      },
     })
-
-    const caption    = (req.body.caption || '').slice(0, 500)
-    const uploadedBy = req.body.uploaded_by === 'Duda' ? 'Duda' : 'Matheus'
-
-    await pool.query(
-      'INSERT INTO uploaded_photos (filename, url, caption, uploaded_by) VALUES (?, ?, ?, ?)',
-      [req.file.originalname, blob.url, caption, uploadedBy]
-    )
-
-    res.json({ url: blob.url, caption, uploaded_by: uploadedBy })
+    return res.json(jsonResponse)
   } catch (e) {
     console.error(e)
-    res.status(500).json({ error: 'Erro ao fazer upload: ' + e.message })
+    return res.status(400).json({ error: e.message })
   }
 })
 
-// DELETE /api/photos/:id — remove uma foto (exige PIN)
+// DELETE /api/photos/:id
 app.delete('/api/photos/:id', requirePin, async (req, res) => {
   try {
     const [rows] = await pool.query(

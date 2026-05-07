@@ -654,27 +654,36 @@ async function submitUpload() {
   btn.disabled = true
   status.textContent = 'Enviando...'
 
+  const caption    = document.getElementById('captionInput').value.trim()
+  const uploadedBy = document.getElementById('uploadedByInput').value
   let successCount = 0
-  let errorCount = 0
+  let errorCount   = 0
 
-  for (const file of Array.from(files)) {
-    const formData = new FormData()
-    formData.append('photo', file)
-    formData.append('caption', document.getElementById('captionInput').value.trim())
-    formData.append('uploaded_by', document.getElementById('uploadedByInput').value)
+  try {
+    const { upload } = await import('https://esm.sh/@vercel/blob/client')
 
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'x-upload-pin': pin },
-        body: formData
-      })
-      const data = await res.json()
-      if (!res.ok) { errorCount++; if (res.status === 401) { status.textContent = 'PIN incorreto.'; btn.disabled = false; return; } }
-      else successCount++
-    } catch (_) {
-      errorCount++
+    for (const file of Array.from(files)) {
+      try {
+        await upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+          clientPayload: JSON.stringify({ pin, caption, uploadedBy }),
+        })
+        successCount++
+      } catch (e) {
+        if (e.message && e.message.toLowerCase().includes('pin')) {
+          status.textContent = 'PIN incorreto.'
+          btn.disabled = false
+          return
+        }
+        errorCount++
+      }
     }
+  } catch (e) {
+    console.error(e)
+    status.textContent = 'Erro ao enviar. Tente novamente.'
+    btn.disabled = false
+    return
   }
 
   if (successCount > 0) {
