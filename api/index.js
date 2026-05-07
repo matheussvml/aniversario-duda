@@ -24,6 +24,7 @@ function requirePin(req, res, next) {
 
 // GET /api/photos
 app.get('/api/photos', async (_req, res) => {
+  res.set('Cache-Control', 'no-store')
   try {
     const [rows] = await pool.query(
       'SELECT id, filename, url, caption, uploaded_by, created_at FROM uploaded_photos ORDER BY created_at DESC'
