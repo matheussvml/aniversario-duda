@@ -227,6 +227,10 @@ let quizScore = 0;
 let currentQuizOptions = [];
 let currentQuizCorrect = 0;
 let musicPlaying = false;
+var tlExtraPhotos = {};
+var tlManageMode = false;
+var tlUploadKey = null;
+var editingType = 'uploaded';
 
 // ── HELPERS ──
 const PHOTO_BLOB_URLS = {
@@ -364,7 +368,10 @@ function goTo(tabId) {
     if (!document.getElementById('gallery').dataset.built) buildGallery();
     loadUploadedPhotos();
   }
-  if (tabId === 'historia' && !document.getElementById('timeline').dataset.built) buildTimeline();
+  if (tabId === 'historia') {
+    if (!document.getElementById('timeline').dataset.built) buildTimeline();
+    loadTimelinePhotos();
+  }
   if (tabId === 'amote') initReasons();
   if (tabId === 'quiz' && !document.getElementById('quizWrap').dataset.built) buildQuiz();
 }
@@ -402,42 +409,164 @@ function buildTimeline() {
   const container = document.getElementById('timeline');
   container.dataset.built = '1';
   container.innerHTML = '';
-
   timelineData.forEach(function(item, i) {
-    const el = document.createElement('div');
-    el.className = 'tl-item';
-
-    let photosHtml = '';
-    if (item.photos.length === 0) {
-      photosHtml = '<p class="tl-nophoto">📷 sem foto, mas guardado no coração</p>';
-    } else {
-      photosHtml = '<div class="tl-photos">';
-      item.photos.forEach(function(f, fi) {
-        if (isVideo(f)) {
-          photosHtml += '<div class="tl-vid-thumb" onclick="openLb(\'tl-' + i + '\',' + fi + ')">▶️</div>';
-        } else {
-          photosHtml += '<img class="tl-thumb" src="' + src(f) + '" loading="lazy" onclick="openLb(\'tl-' + i + '\',' + fi + ')" alt="">';
-        }
-      });
-      photosHtml += '</div>';
-    }
-
-    el.innerHTML =
-      '<div class="tl-dot">' + item.emoji + '</div>' +
-      '<div class="tl-card">' +
-        '<p class="tl-date">' + item.date + '</p>' +
-        '<h3 class="tl-title">' + item.title + '</h3>' +
-        (item.desc ? '<p class="tl-desc">' + item.desc + '</p>' : '') +
-        photosHtml +
-      '</div>';
-
-    container.appendChild(el);
-
-    // Register lightbox items for this group
-    lbItems['tl-' + i] = item.photos.map(function(f) {
-      return { file: f, caption: item.title + ', ' + item.date };
-    });
+    container.appendChild(buildTlItem(item, i));
   });
+  if (tlManageMode) container.classList.add('tl-manage-mode');
+}
+
+function buildTlItem(item, i) {
+  const el = document.createElement('div');
+  el.className = 'tl-item';
+
+  let photosHtml = '';
+  if (item.photos.length === 0) {
+    photosHtml = '<p class="tl-nophoto">📷 sem foto, mas guardado no coração</p>';
+  } else {
+    photosHtml = '<div class="tl-photos">';
+    item.photos.forEach(function(f, fi) {
+      if (isVideo(f)) {
+        photosHtml += '<div class="tl-vid-thumb" onclick="openLb(\'tl-' + i + '\',' + fi + ')">▶️</div>';
+      } else {
+        photosHtml += '<img class="tl-thumb" src="' + src(f) + '" loading="lazy" onclick="openLb(\'tl-' + i + '\',' + fi + ')" alt="">';
+      }
+    });
+    photosHtml += '</div>';
+  }
+
+  el.innerHTML =
+    '<div class="tl-dot">' + item.emoji + '</div>' +
+    '<div class="tl-card">' +
+      '<p class="tl-date">' + item.date + '</p>' +
+      '<h3 class="tl-title">' + item.title + '</h3>' +
+      (item.desc ? '<p class="tl-desc">' + item.desc + '</p>' : '') +
+      photosHtml +
+    '</div>';
+
+  const card = el.querySelector('.tl-card');
+
+  // Extra photos from DB
+  const extras = tlExtraPhotos[String(i)] || [];
+  const baseIdx = item.photos.length;
+  if (extras.length) {
+    const extraDiv = document.createElement('div');
+    extraDiv.className = 'tl-extra-photos';
+    extras.forEach(function(p, ei) {
+      const lbIdx = baseIdx + ei;
+      const isVid = /\.(mp4|webm|mov)$/i.test(p.url);
+      const thumb = document.createElement('div');
+      thumb.className = 'gal-item tl-extra-item';
+      thumb.dataset.id = p.id;
+      thumb.dataset.caption = p.caption || '';
+      thumb.dataset.url = p.url;
+      thumb.dataset.filename = p.filename || p.url.split('/').pop();
+      const dlBtn = '<button class="gal-dl-btn" onclick="downloadPhoto(event,this)" title="Baixar">⬇ Baixar</button>';
+      const mActions =
+        '<div class="gal-manage-actions">' +
+          '<button class="gal-action-btn edit" onclick="openTlEditModal(event,' + p.id + ',this)" title="Editar">✏️</button>' +
+          '<button class="gal-action-btn del" onclick="deleteTlPhoto(event,' + p.id + ')" title="Excluir">🗑️</button>' +
+        '</div>';
+      if (isVid) {
+        thumb.innerHTML =
+          '<div class="gal-vid-cover tl-vid-cover" onclick="openLb(\'tl-' + i + '\',' + lbIdx + ')"><span>▶️</span></div>' +
+          dlBtn + mActions;
+      } else {
+        thumb.innerHTML =
+          '<img src="' + p.url + '" loading="lazy" alt="" onclick="openLb(\'tl-' + i + '\',' + lbIdx + ')">' +
+          dlBtn + mActions;
+      }
+      extraDiv.appendChild(thumb);
+    });
+    card.appendChild(extraDiv);
+  }
+
+  // Add photo button (shown in manage mode)
+  const addBtn = document.createElement('button');
+  addBtn.className = 'tl-add-btn';
+  addBtn.textContent = '+ Adicionar foto';
+  addBtn.onclick = function() { openTlUploadModal(i); };
+  card.appendChild(addBtn);
+
+  // Register lightbox items
+  const hardcoded = item.photos.map(function(f) {
+    return { file: f, caption: item.title + ', ' + item.date };
+  });
+  const extraLb = extras.map(function(p) {
+    return { file: p.url, caption: (p.caption || item.title) + ', ' + item.date, isRemote: true };
+  });
+  lbItems['tl-' + i] = hardcoded.concat(extraLb);
+
+  return el;
+}
+
+function refreshTimeline() {
+  const container = document.getElementById('timeline');
+  if (!container.dataset.built) return;
+  container.innerHTML = '';
+  timelineData.forEach(function(item, i) {
+    container.appendChild(buildTlItem(item, i));
+  });
+  if (tlManageMode) container.classList.add('tl-manage-mode');
+}
+
+async function loadTimelinePhotos() {
+  try {
+    const res = await fetch('/api/timeline-photos');
+    if (!res.ok) return;
+    const photos = await res.json();
+    tlExtraPhotos = {};
+    photos.forEach(function(p) {
+      if (!tlExtraPhotos[p.timeline_key]) tlExtraPhotos[p.timeline_key] = [];
+      tlExtraPhotos[p.timeline_key].push(p);
+    });
+    refreshTimeline();
+  } catch (_) {}
+}
+
+function toggleTlManageMode() {
+  tlManageMode = !tlManageMode;
+  const container = document.getElementById('timeline');
+  const btn = document.getElementById('tlManageBtn');
+  container.classList.toggle('tl-manage-mode', tlManageMode);
+  btn.classList.toggle('active', tlManageMode);
+  btn.textContent = tlManageMode ? '✅ Concluir' : '✏️ Gerenciar';
+}
+
+function openTlUploadModal(i) {
+  tlUploadKey = String(i);
+  document.getElementById('uploadModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  resetUploadForm();
+  var infoEl = document.getElementById('tlUploadInfo');
+  infoEl.style.display = 'block';
+  infoEl.textContent = '📍 Adicionando a: ' + timelineData[i].title + ' (' + timelineData[i].date + ')';
+}
+
+function openTlEditModal(e, id, btn) {
+  editingType = 'timeline';
+  e.stopPropagation();
+  editingId = id;
+  const card = btn.closest('.gal-item');
+  document.getElementById('editCaptionInput').value = card.dataset.caption || '';
+  document.getElementById('editStatus').textContent = '';
+  document.getElementById('editModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('editCaptionInput').focus();
+}
+
+async function deleteTlPhoto(e, id) {
+  e.stopPropagation();
+  if (!confirm('Excluir esta foto?')) return;
+  try {
+    const res = await fetch('/api/timeline-photos/' + id, {
+      method: 'DELETE',
+      headers: { 'x-auth-token': getStoredToken() },
+    });
+    if (!res.ok) throw new Error();
+    await loadTimelinePhotos();
+  } catch {
+    alert('Erro ao excluir. Tente novamente.');
+  }
 }
 
 // ── GALLERY ──
@@ -745,6 +874,7 @@ function toggleManageMode() {
 }
 
 function openEditModal(e, id, btn) {
+  editingType = 'uploaded'
   e.stopPropagation()
   editingId = id
   const card = btn.closest('.gal-item')
@@ -769,8 +899,9 @@ async function saveEdit() {
   const status = document.getElementById('editStatus')
   btn.disabled = true
   status.textContent = 'Salvando...'
+  const endpoint = editingType === 'timeline' ? '/api/timeline-photos/' : '/api/photos/'
   try {
-    const res = await fetch('/api/photos/' + editingId, {
+    const res = await fetch(endpoint + editingId, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -784,7 +915,8 @@ async function saveEdit() {
       document.getElementById('editModal').classList.add('hidden')
       document.body.style.overflow = ''
       editingId = null
-      loadUploadedPhotos()
+      if (editingType === 'timeline') loadTimelinePhotos()
+      else loadUploadedPhotos()
     }, 800)
   } catch {
     status.textContent = 'Erro ao salvar.'
@@ -829,15 +961,18 @@ async function downloadPhoto(e, btn) {
 
 // ── UPLOAD MODAL ──
 function openUploadModal() {
-  document.getElementById('uploadModal').classList.remove('hidden')
-  document.body.style.overflow = 'hidden'
-  resetUploadForm()
+  tlUploadKey = null;
+  document.getElementById('uploadModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  resetUploadForm();
+  document.getElementById('tlUploadInfo').style.display = 'none';
 }
 
 function closeUploadModal(e) {
   if (e && e.target !== document.getElementById('uploadModal')) return
   document.getElementById('uploadModal').classList.add('hidden')
   document.body.style.overflow = ''
+  tlUploadKey = null
 }
 
 function resetUploadForm() {
@@ -907,11 +1042,20 @@ async function submitUpload() {
       if (!putRes.ok) throw new Error('Erro ao enviar arquivo')
 
       // 3. Salva metadados no MySQL
-      const saveRes = await fetch('/api/photos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-upload-pin': pin },
-        body: JSON.stringify({ url: publicUrl, filename: file.name, caption, uploaded_by: uploadedBy }),
-      })
+      let saveRes
+      if (tlUploadKey !== null) {
+        saveRes = await fetch('/api/timeline-photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-upload-pin': pin },
+          body: JSON.stringify({ url: publicUrl, filename: file.name, caption, timeline_key: tlUploadKey }),
+        })
+      } else {
+        saveRes = await fetch('/api/photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-upload-pin': pin },
+          body: JSON.stringify({ url: publicUrl, filename: file.name, caption, uploaded_by: uploadedBy }),
+        })
+      }
       if (!saveRes.ok) throw new Error('Erro ao salvar metadados')
 
       successCount++
@@ -923,10 +1067,15 @@ async function submitUpload() {
 
   if (successCount > 0) {
     status.textContent = successCount + ' foto(s) enviada(s) com sucesso! 💕'
-    loadUploadedPhotos()
+    if (tlUploadKey !== null) {
+      await loadTimelinePhotos()
+    } else {
+      loadUploadedPhotos()
+    }
     setTimeout(function() {
       document.getElementById('uploadModal').classList.add('hidden')
       document.body.style.overflow = ''
+      tlUploadKey = null
     }, 1500)
   } else {
     status.textContent = 'Erro ao enviar. Tente novamente.'
@@ -1039,4 +1188,5 @@ document.addEventListener('DOMContentLoaded', function() {
   initCounter();
   initPetals();
   buildTimeline();
+  loadTimelinePhotos();
 });

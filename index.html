@@ -69,6 +69,7 @@
       <div class="section-head">
         <h2>Nossa História</h2>
         <p class="section-sub">Cada momento que fez parte de nós</p>
+        <button class="manage-btn" id="tlManageBtn" onclick="toggleTlManageMode()">✏️ Gerenciar</button>
       </div>
       <div class="timeline" id="timeline"></div>
     </section>
@@ -175,6 +176,7 @@
         </div>
       </div>
 
+      <p id="tlUploadInfo" class="tl-upload-info" style="display:none"></p>
       <input type="text" id="captionInput" placeholder="Legenda (opcional)" class="upload-input" maxlength="500">
 
       <select id="uploadedByInput" class="upload-input">

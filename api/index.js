@@ -176,6 +176,65 @@ app.delete('/api/photos/:id', requireAuth, async (req, res) => {
   }
 })
 
+// GET /api/timeline-photos
+app.get('/api/timeline-photos', async (_req, res) => {
+  res.set('Cache-Control', 'no-store')
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, timeline_key, filename, url, caption, created_at FROM timeline_photos ORDER BY created_at ASC'
+    )
+    res.json(rows)
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao buscar fotos' })
+  }
+})
+
+// POST /api/timeline-photos — salva metadados (exige PIN)
+app.post('/api/timeline-photos', requirePin, async (req, res) => {
+  const { url, filename, caption, timeline_key } = req.body
+  if (!url || timeline_key === undefined) return res.status(400).json({ error: 'url e timeline_key obrigatórios' })
+  try {
+    await pool.query(
+      'INSERT INTO timeline_photos (timeline_key, filename, url, caption) VALUES (?, ?, ?, ?)',
+      [String(timeline_key), filename || url, url, (caption || '').slice(0, 500)]
+    )
+    res.json({ ok: true })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao salvar foto' })
+  }
+})
+
+// PUT /api/timeline-photos/:id — edita legenda (exige auth)
+app.put('/api/timeline-photos/:id', requireAuth, async (req, res) => {
+  const { caption } = req.body
+  if (caption === undefined) return res.status(400).json({ error: 'caption obrigatório' })
+  try {
+    await pool.query('UPDATE timeline_photos SET caption = ? WHERE id = ?',
+      [(caption || '').slice(0, 500), req.params.id])
+    res.json({ ok: true })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao atualizar' })
+  }
+})
+
+// DELETE /api/timeline-photos/:id — exige auth
+app.delete('/api/timeline-photos/:id', requireAuth, async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT url FROM timeline_photos WHERE id = ?', [req.params.id])
+    if (!rows.length) return res.status(404).json({ error: 'Foto não encontrada' })
+    const key = rows[0].url.replace(`${process.env.R2_PUBLIC_URL}/`, '')
+    await s3.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key }))
+    await pool.query('DELETE FROM timeline_photos WHERE id = ?', [req.params.id])
+    res.json({ ok: true })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao deletar' })
+  }
+})
+
 if (require.main === module) {
   const PORT = process.env.PORT || 3000
   app.listen(PORT, () => {

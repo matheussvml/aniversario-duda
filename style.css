@@ -331,6 +331,78 @@ body {
   opacity: 0.7;
 }
 
+/* ── TIMELINE EXTRAS (fotos do DB) ── */
+.tl-extra-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px dashed var(--rosa-claro);
+}
+
+.tl-extra-item {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  break-inside: auto;
+  margin-bottom: 0;
+}
+
+.tl-extra-item img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  display: block;
+}
+
+.tl-extra-item .gal-vid-cover {
+  width: 72px;
+  height: 72px;
+  aspect-ratio: unset;
+}
+
+.tl-extra-item .gal-vid-cover span { font-size: 1.5rem; }
+
+.tl-extra-item .gal-dl-btn {
+  font-size: 0.58rem;
+  padding: 0.2rem 0.45rem;
+  bottom: 3px;
+  left: 3px;
+}
+
+.tl-add-btn {
+  display: none;
+  width: 100%;
+  margin-top: 0.7rem;
+  padding: 0.4rem 0.8rem;
+  border: 1.5px dashed var(--rosa-forte);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rosa-forte);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.tl-add-btn:hover { background: var(--rosa-claro); }
+
+#timeline.tl-manage-mode .tl-add-btn { display: block; }
+#timeline.tl-manage-mode .gal-manage-actions { display: flex; }
+
+.tl-upload-info {
+  font-size: 0.82rem;
+  color: var(--rosa-forte);
+  font-weight: 700;
+  background: var(--rosa-claro);
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  margin-bottom: 0.2rem;
+  text-align: center;
+}
+
 /* ── GALLERY ── */
 .gallery {
   column-count: 3;
