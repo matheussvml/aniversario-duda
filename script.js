@@ -1,4 +1,4 @@
-// =====================================================
+﻿// =====================================================
 //  PREENCHA AS RESPOSTAS DO QUIZ ANTES DE MOSTRAR
 //  Substitua cada valor entre aspas pelo correto.
 // =====================================================
@@ -153,7 +153,7 @@ const timelineData = [
 
   { date:"25 de Abril de 2026", emoji:"🛍️", title:"Abrimos as Coisinhas do Shopping",
     desc:"Abrimos juntos as coisinhas que compramos no shopping.",
-    photos:["20260425_170617.mp4","20260425_170748.mp4","20260425_171159.mp4","20260425_173501.mp4"] },
+    photos:["20260425_170748.mp4","20260425_170617.mp4","20260425_173501.mp4","20260425_171159.mp4"] },
 
   { date:"01 de Maio de 2026", emoji:"💕", title:"Mais um Momentinho Juntos",
     desc:"",
@@ -229,10 +229,127 @@ let currentQuizCorrect = 0;
 let musicPlaying = false;
 
 // ── HELPERS ──
+const PHOTO_BLOB_URLS = {
+  "20260118_172913.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260118_172913.jpg",
+  "20260118_173125.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260118_173125.jpg",
+  "20260118_173930.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260118_173930.jpg",
+  "20260118_173933.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260118_173933.jpg",
+  "20260125_220241.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260125_220241.jpg",
+  "20260125_220244.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260125_220244.jpg",
+  "20260131_200141.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260131_200141.jpg",
+  "20260207_231528.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260207_231528.jpg",
+  "20260207_232854.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260207_232854.jpg",
+  "20260207_232859.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260207_232859.jpg",
+  "20260207_232902.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260207_232902.jpg",
+  "20260207_233033.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260207_233033.jpg",
+  "20260207_233036.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260207_233036.jpg",
+  "20260208_200840.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260208_200840.jpg",
+  "20260208_200847.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260208_200847.jpg",
+  "20260213_195853.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260213_195853.jpg",
+  "20260213_195859.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260213_195859.jpg",
+  "20260216_015003(1).jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260216_015003(1).jpg",
+  "20260216_022223.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260216_022223.jpg",
+  "20260216_022229.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260216_022229.jpg",
+  "20260216_182911.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260216_182911.jpg",
+  "20260306_235747.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260306_235747.jpg",
+  "20260307_125627.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260307_125627.jpg",
+  "20260307_180244.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260307_180244.jpg",
+  "20260308_222015.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260308_222015.jpg",
+  "20260308_222017.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260308_222017.jpg",
+  "20260314_234627.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260314_234627.jpg",
+  "20260314_234636.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260314_234636.jpg",
+  "20260314_234640.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260314_234640.jpg",
+  "20260314_234642.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260314_234642.jpg",
+  "20260314_234645.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260314_234645.jpg",
+  "20260329_135137.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260329_135137.jpg",
+  "20260329_135139.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260329_135139.jpg",
+  "20260329_135936.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260329_135936.jpg",
+  "20260403_113123.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260403_113123.jpg",
+  "20260403_113132.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260403_113132.jpg",
+  "20260404_160925.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260404_160925.jpg",
+  "20260404_160934.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260404_160934.jpg",
+  "20260410_191730.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260410_191730.jpg",
+  "20260410_191738.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260410_191738.jpg",
+  "20260410_191739.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260410_191739.jpg",
+  "20260410_192615.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260410_192615.jpg",
+  "20260411_222252.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260411_222252.jpg",
+  "20260411_222255.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260411_222255.jpg",
+  "20260411_222258.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260411_222258.jpg",
+  "20260411_222300.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260411_222300.jpg",
+  "20260411_222305.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260411_222305.jpg",
+  "20260411_222307.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260411_222307.jpg",
+  "20260411_222310.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260411_222310.jpg",
+  "20260411_222312.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260411_222312.jpg",
+  "20260411_222315.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260411_222315.jpg",
+  "20260412_170639.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170639.jpg",
+  "20260412_170641.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170641.jpg",
+  "20260412_170644.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170644.jpg",
+  "20260412_170652.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170652.jpg",
+  "20260412_170654.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170654.jpg",
+  "20260412_170708(0).jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170708(0).jpg",
+  "20260412_170709.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170709.jpg",
+  "20260412_170901(0).jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170901(0).jpg",
+  "20260412_170907.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170907.jpg",
+  "20260412_170908.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170908.jpg",
+  "20260412_170919.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170919.jpg",
+  "20260412_170921.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170921.jpg",
+  "20260412_170922.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260412_170922.jpg",
+  "câmera externa_20260419_10259.mp4": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/c%C3%A2mera%20externa_20260419_10259.mp4",
+  "IMG-20260126-WA0102.jpeg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260126-WA0102.jpeg",
+  "IMG-20260131-WA0076.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260131-WA0076.jpg",
+  "IMG-20260201-WA0028.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260201-WA0028.jpg",
+  "IMG-20260201-WA0033.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260201-WA0033.jpg",
+  "IMG-20260202-WA0081.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260202-WA0081.jpg",
+  "IMG-20260208-WA0120.jpeg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260208-WA0120.jpeg",
+  "IMG-20260210-WA0067.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260210-WA0067.jpg",
+  "IMG-20260210-WA0068.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260210-WA0068.jpg",
+  "IMG-20260213-WA0059.jpeg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260213-WA0059.jpeg",
+  "IMG-20260213-WA0061.jpeg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260213-WA0061.jpeg",
+  "IMG-20260216-WA0012.jpeg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260216-WA0012.jpeg",
+  "IMG-20260216-WA0089.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260216-WA0089.jpg",
+  "IMG-20260216-WA0090.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260216-WA0090.jpg",
+  "IMG-20260216-WA0091(1).jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260216-WA0091(1).jpg",
+  "IMG-20260217-WA0018.jpeg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260217-WA0018.jpeg",
+  "IMG-20260305-WA0010.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260305-WA0010.jpg",
+  "IMG-20260317-WA0142.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260317-WA0142.jpg",
+  "IMG-20260317-WA0160.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260317-WA0160.jpg",
+  "IMG-20260317-WA0162.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260317-WA0162.jpg",
+  "IMG-20260320-WA0076.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260320-WA0076.jpg",
+  "IMG-20260322-WA0070.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260322-WA0070.jpg",
+  "IMG-20260328-WA0162.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0162.jpg",
+  "IMG-20260328-WA0164.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0164.jpg",
+  "IMG-20260328-WA0166.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0166.jpg",
+  "IMG-20260328-WA0168.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0168.jpg",
+  "IMG-20260328-WA0170.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0170.jpg",
+  "IMG-20260328-WA0172.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0172.jpg",
+  "IMG-20260328-WA0176.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0176.jpg",
+  "IMG-20260328-WA0178.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0178.jpg",
+  "IMG-20260328-WA0180.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0180.jpg",
+  "IMG-20260328-WA0182.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260328-WA0182.jpg",
+  "IMG-20260404-WA0041.jpeg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260404-WA0041.jpeg",
+  "IMG-20260405-WA0033.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260405-WA0033.jpg",
+  "IMG-20260405-WA0036.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260405-WA0036.jpg",
+  "IMG-20260415-WA0003.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260415-WA0003.jpg",
+  "IMG-20260421-WA0236.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260421-WA0236.jpg",
+  "IMG-20260421-WA0237.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260421-WA0237.jpg",
+  "IMG-20260421-WA0238.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260421-WA0238.jpg",
+  "IMG-20260421-WA0239.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260421-WA0239.jpg",
+  "IMG-20260421-WA0240.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260421-WA0240.jpg",
+  "IMG-20260421-WA0241.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260421-WA0241.jpg",
+  "IMG-20260421-WA0242.jpg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260421-WA0242.jpg",
+  "IMG-20260501-WA0122.jpeg": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/IMG-20260501-WA0122.jpeg",
+  "VID-20260330-WA0060.mp4": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/VID-20260330-WA0060.mp4",
+  "VID_20260215_221607_393.mp4": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/VID_20260215_221607_393.mp4",
+  "20260425_170617.mp4": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260425_170617.mp4",
+  "20260425_170748.mp4": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260425_170748.mp4",
+  "20260425_171159.mp4": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260425_171159.mp4",
+  "20260425_173501.mp4": "https://pub-81a1b0a194e04076b91ffdb7db0e8ec6.r2.dev/timeline/20260425_173501.mp4"
+}
+
 function isVideo(f) { return /\.(mp4|webm|mov)$/i.test(f); }
 
 function src(filename) {
-  return 'photos-3-001/' + encodeURIComponent(filename);
+  return PHOTO_BLOB_URLS[filename] || 'photos-3-001/' + encodeURIComponent(filename);
 }
 
 // ── TABS ──
@@ -659,41 +776,41 @@ async function submitUpload() {
   let successCount = 0
   let errorCount   = 0
 
-  try {
-    const { upload } = await import('https://esm.sh/@vercel/blob/client')
+  for (const file of Array.from(files)) {
+    try {
+      const safeName = Date.now() + '-' + file.name
 
-    for (const file of Array.from(files)) {
-      try {
-        const safeName = Date.now() + '-' + file.name
-        const blob = await upload(safeName, file, {
-          access: 'public',
-          handleUploadUrl: '/api/upload',
-          clientPayload: JSON.stringify({ pin }),
-        })
+      // 1. Pede presigned URL ao backend
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-upload-pin': pin },
+        body: JSON.stringify({ filename: safeName, contentType: file.type }),
+      })
+      if (uploadRes.status === 401) { status.textContent = 'PIN incorreto.'; btn.disabled = false; return; }
+      if (!uploadRes.ok) throw new Error('Erro ao obter URL de upload')
+      const { presignedUrl, publicUrl } = await uploadRes.json()
 
-        // Salva metadados explicitamente no MySQL após o blob confirmar o upload
-        const saveRes = await fetch('/api/photos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-upload-pin': pin },
-          body: JSON.stringify({ url: blob.url, filename: file.name, caption, uploaded_by: uploadedBy }),
-        })
-        if (!saveRes.ok) throw new Error('Erro ao salvar metadados')
+      // 2. Envia o arquivo direto ao R2
+      const putRes = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type },
+      })
+      if (!putRes.ok) throw new Error('Erro ao enviar arquivo')
 
-        successCount++
-      } catch (e) {
-        if (e.message && e.message.toLowerCase().includes('pin')) {
-          status.textContent = 'PIN incorreto.'
-          btn.disabled = false
-          return
-        }
-        errorCount++
-      }
+      // 3. Salva metadados no MySQL
+      const saveRes = await fetch('/api/photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-upload-pin': pin },
+        body: JSON.stringify({ url: publicUrl, filename: file.name, caption, uploaded_by: uploadedBy }),
+      })
+      if (!saveRes.ok) throw new Error('Erro ao salvar metadados')
+
+      successCount++
+    } catch (e) {
+      console.error(e)
+      errorCount++
     }
-  } catch (e) {
-    console.error(e)
-    status.textContent = 'Erro ao enviar. Tente novamente.'
-    btn.disabled = false
-    return
   }
 
   if (successCount > 0) {

@@ -1,8 +1,8 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') })
 
 const express = require('express')
-const { del } = require('@vercel/blob')
-const { handleUpload } = require('@vercel/blob/client')
+const { S3Client, DeleteObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3')
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner')
 const path = require('path')
 const pool = require('../lib/db')
 
@@ -13,6 +13,15 @@ app.use(express.urlencoded({ extended: true }))
 if (process.env.NODE_ENV !== 'production') {
   app.use(express.static(path.join(__dirname, '..')))
 }
+
+const s3 = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+})
 
 function requirePin(req, res, next) {
   const pin = req.headers['x-upload-pin'] || req.body?.pin
@@ -36,7 +45,7 @@ app.get('/api/photos', async (_req, res) => {
   }
 })
 
-// POST /api/photos — salva metadados após upload concluído pelo cliente (exige PIN)
+// POST /api/photos — salva metadados após upload (exige PIN)
 app.post('/api/photos', requirePin, async (req, res) => {
   const { url, filename, caption, uploaded_by } = req.body
   if (!url) return res.status(400).json({ error: 'URL obrigatória' })
@@ -52,31 +61,25 @@ app.post('/api/photos', requirePin, async (req, res) => {
   }
 })
 
-// POST /api/upload — gera token para upload direto do browser ao Vercel Blob
-app.post('/api/upload', async (req, res) => {
+// POST /api/upload — gera presigned URL para upload direto ao R2 (exige PIN)
+app.post('/api/upload', requirePin, async (req, res) => {
+  const { filename, contentType } = req.body
+  if (!filename || !contentType) {
+    return res.status(400).json({ error: 'filename e contentType obrigatórios' })
+  }
+  const key = `uploads/${Date.now()}-${filename}`
   try {
-    const jsonResponse = await handleUpload({
-      body: req.body,
-      request: req,
-      onBeforeGenerateToken: async (pathname, clientPayload) => {
-        const payload = JSON.parse(clientPayload || '{}')
-        if (!process.env.UPLOAD_PIN || payload.pin !== process.env.UPLOAD_PIN) {
-          throw new Error('PIN incorreto')
-        }
-        return {
-          allowedContentTypes: [
-            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic',
-            'video/mp4', 'video/quicktime', 'video/webm',
-          ],
-          maximumSizeInBytes: 100 * 1024 * 1024,
-        }
-      },
-      onUploadCompleted: async () => {},
+    const command = new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+      ContentType: contentType,
     })
-    return res.json(jsonResponse)
+    const presignedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
+    const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`
+    res.json({ presignedUrl, publicUrl })
   } catch (e) {
     console.error(e)
-    return res.status(400).json({ error: e.message })
+    res.status(500).json({ error: 'Erro ao gerar URL de upload' })
   }
 })
 
@@ -90,7 +93,11 @@ app.delete('/api/photos/:id', requirePin, async (req, res) => {
     if (!rows.length) {
       return res.status(404).json({ error: 'Foto não encontrada' })
     }
-    await del(rows[0].url)
+    const key = rows[0].url.replace(`${process.env.R2_PUBLIC_URL}/`, '')
+    await s3.send(new DeleteObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+    }))
     await pool.query('DELETE FROM uploaded_photos WHERE id = ?', [req.params.id])
     res.json({ ok: true })
   } catch (e) {
