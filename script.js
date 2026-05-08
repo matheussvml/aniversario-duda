@@ -360,7 +360,8 @@ var PT_MONTHS = {
 
 function parseTlDate(dateStr) {
   if (!dateStr) return Infinity;
-  var clean = dateStr.split('–')[0].trim();
+  // Strip "– DD " from range dates ("02 – 04 de Abril de 2026" → "02 de Abril de 2026")
+  var clean = dateStr.replace(/\s*–\s*\d+\s+/, ' ');
   var m = clean.match(/(\d+)\s+de\s+(\w+)\s+de\s+(\d+)/i);
   if (!m) return Infinity;
   var month = PT_MONTHS[m[2].toLowerCase()];
