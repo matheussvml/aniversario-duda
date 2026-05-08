@@ -987,6 +987,26 @@ body {
 .gal-action-btn.edit { background: white; }
 .gal-action-btn.del  { background: #ff5252; color: white; }
 
+.gal-dl-btn {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.15s;
+  z-index: 5;
+}
+.gal-dl-btn:hover { transform: scale(1.1); }
+
 /* ── LOGIN OVERLAY ── */
 .login-overlay {
   position: fixed;

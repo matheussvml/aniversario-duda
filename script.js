@@ -706,8 +706,11 @@ function buildUploadedGallery(photos) {
     el.className = 'gal-item'
     el.dataset.id = p.id
     el.dataset.caption = p.caption || ''
+    el.dataset.url = p.url
+    el.dataset.filename = p.filename || p.url.split('/').pop()
 
     const badge = '<span class="upload-badge">' + p.uploaded_by + '</span>'
+    const dlBtn = '<button class="gal-dl-btn" onclick="downloadPhoto(event,this)" title="Baixar">⬇️</button>'
     const actions =
       '<div class="gal-manage-actions">' +
         '<button class="gal-action-btn edit" onclick="openEditModal(event,' + p.id + ',this)" title="Editar legenda">✏️</button>' +
@@ -719,11 +722,11 @@ function buildUploadedGallery(photos) {
         '<div class="gal-vid-cover" onclick="openLb(\'uploaded\',' + i + ')">' +
           '<span>▶️</span>' +
           '<p>' + (p.caption || 'vídeo') + '</p>' +
-        '</div>' + badge + actions
+        '</div>' + badge + dlBtn + actions
     } else {
       el.innerHTML =
         '<img src="' + p.url + '" loading="lazy" alt="' + (p.caption || '') + '" onclick="openLb(\'uploaded\',' + i + ')">' +
-        badge + actions
+        badge + dlBtn + actions
     }
 
     container.appendChild(el)
@@ -801,6 +804,26 @@ async function deletePhoto(e, id) {
     loadUploadedPhotos()
   } catch {
     alert('Erro ao excluir. Tente novamente.')
+  }
+}
+
+async function downloadPhoto(e, btn) {
+  e.stopPropagation()
+  const card = btn.closest('.gal-item')
+  const url = card.dataset.url
+  const filename = card.dataset.filename
+  try {
+    const res = await fetch(url)
+    const blob = await res.blob()
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(function() { URL.revokeObjectURL(a.href) }, 60000)
+  } catch {
+    window.open(url, '_blank')
   }
 }
 
