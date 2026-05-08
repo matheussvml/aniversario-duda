@@ -451,7 +451,7 @@ function buildTlItem(item) {
   el.className = 'tl-item';
 
   let photosHtml = '';
-  if (!item.photos || item.photos.length === 0) {
+  if (item.photos.length === 0 && !(tlExtraPhotos[key] && tlExtraPhotos[key].length)) {
     photosHtml = '<p class="tl-nophoto">📷 sem foto, mas guardado no coração</p>';
   } else {
     photosHtml = '<div class="tl-photos">';
@@ -488,7 +488,7 @@ function buildTlItem(item) {
 
   // Extra photos from DB
   const extras = tlExtraPhotos[key] || [];
-  const baseIdx = item.photos ? item.photos.length : 0;
+  const baseIdx = item.photos.length;
   if (extras.length) {
     const extraDiv = document.createElement('div');
     extraDiv.className = 'tl-extra-photos';
