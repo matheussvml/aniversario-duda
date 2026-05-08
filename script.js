@@ -686,6 +686,9 @@ async function loadUploadedPhotos() {
   }
 }
 
+var manageMode = false
+var editingId = null
+
 function buildUploadedGallery(photos) {
   const section = document.getElementById('uploadedSection')
   const container = document.getElementById('uploadedGallery')
@@ -701,22 +704,104 @@ function buildUploadedGallery(photos) {
   photos.forEach(function(p, i) {
     const el = document.createElement('div')
     el.className = 'gal-item'
-    el.onclick = function() { openLb('uploaded', i) }
+    el.dataset.id = p.id
+    el.dataset.caption = p.caption || ''
 
     const badge = '<span class="upload-badge">' + p.uploaded_by + '</span>'
+    const actions =
+      '<div class="gal-manage-actions">' +
+        '<button class="gal-action-btn edit" onclick="openEditModal(event,' + p.id + ',this)" title="Editar legenda">✏️</button>' +
+        '<button class="gal-action-btn del" onclick="deletePhoto(event,' + p.id + ')" title="Excluir">🗑️</button>' +
+      '</div>'
 
     if (/\.(mp4|webm|mov)$/i.test(p.url)) {
       el.innerHTML =
-        '<div class="gal-vid-cover">' +
+        '<div class="gal-vid-cover" onclick="openLb(\'uploaded\',' + i + ')">' +
           '<span>▶️</span>' +
           '<p>' + (p.caption || 'vídeo') + '</p>' +
-        '</div>' + badge
+        '</div>' + badge + actions
     } else {
-      el.innerHTML = '<img src="' + p.url + '" loading="lazy" alt="' + (p.caption || '') + '">' + badge
+      el.innerHTML =
+        '<img src="' + p.url + '" loading="lazy" alt="' + (p.caption || '') + '" onclick="openLb(\'uploaded\',' + i + ')">' +
+        badge + actions
     }
 
     container.appendChild(el)
   })
+
+  if (manageMode) container.classList.add('manage-mode')
+}
+
+function toggleManageMode() {
+  manageMode = !manageMode
+  const container = document.getElementById('uploadedGallery')
+  const btn = document.getElementById('manageBtn')
+  container.classList.toggle('manage-mode', manageMode)
+  btn.classList.toggle('active', manageMode)
+  btn.textContent = manageMode ? '✅ Concluir' : '✏️ Gerenciar'
+}
+
+function openEditModal(e, id, btn) {
+  e.stopPropagation()
+  editingId = id
+  const card = btn.closest('.gal-item')
+  document.getElementById('editCaptionInput').value = card.dataset.caption || ''
+  document.getElementById('editStatus').textContent = ''
+  document.getElementById('editModal').classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
+  document.getElementById('editCaptionInput').focus()
+}
+
+function closeEditModal(e) {
+  if (e && e.target !== document.getElementById('editModal')) return
+  document.getElementById('editModal').classList.add('hidden')
+  document.body.style.overflow = ''
+  editingId = null
+}
+
+async function saveEdit() {
+  if (!editingId) return
+  const caption = document.getElementById('editCaptionInput').value.trim()
+  const btn = document.getElementById('editSaveBtn')
+  const status = document.getElementById('editStatus')
+  btn.disabled = true
+  status.textContent = 'Salvando...'
+  try {
+    const res = await fetch('/api/photos/' + editingId, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': getStoredToken(),
+      },
+      body: JSON.stringify({ caption }),
+    })
+    if (!res.ok) throw new Error()
+    status.textContent = 'Salvo!'
+    setTimeout(function() {
+      document.getElementById('editModal').classList.add('hidden')
+      document.body.style.overflow = ''
+      editingId = null
+      loadUploadedPhotos()
+    }, 800)
+  } catch {
+    status.textContent = 'Erro ao salvar.'
+    btn.disabled = false
+  }
+}
+
+async function deletePhoto(e, id) {
+  e.stopPropagation()
+  if (!confirm('Excluir esta foto?')) return
+  try {
+    const res = await fetch('/api/photos/' + id, {
+      method: 'DELETE',
+      headers: { 'x-auth-token': getStoredToken() },
+    })
+    if (!res.ok) throw new Error()
+    loadUploadedPhotos()
+  } catch {
+    alert('Erro ao excluir. Tente novamente.')
+  }
 }
 
 // ── UPLOAD MODAL ──

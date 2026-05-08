@@ -936,6 +936,57 @@ body {
   font-style: italic;
 }
 
+/* ── MANAGE MODE ── */
+.uploaded-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.manage-btn {
+  background: var(--rosa-claro);
+  border: 1.5px solid var(--rosa-medio);
+  color: var(--rosa-escuro);
+  border-radius: 20px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.82rem;
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.manage-btn:hover { background: var(--rosa-medio); }
+.manage-btn.active { background: var(--rosa-forte); color: white; border-color: var(--rosa-forte); }
+
+.gal-item { position: relative; }
+
+.gal-manage-actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: none;
+  gap: 4px;
+  z-index: 10;
+}
+.manage-mode .gal-manage-actions { display: flex; }
+
+.gal-action-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transition: transform 0.15s;
+}
+.gal-action-btn:hover { transform: scale(1.1); }
+.gal-action-btn.edit { background: white; }
+.gal-action-btn.del  { background: #ff5252; color: white; }
+
 /* ── LOGIN OVERLAY ── */
 .login-overlay {
   position: fixed;

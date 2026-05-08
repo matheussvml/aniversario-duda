@@ -81,7 +81,10 @@
         <button class="upload-trigger-btn" onclick="openUploadModal()">📷 Enviar Foto</button>
       </div>
       <div id="uploadedSection" class="uploaded-section" style="display:none">
-        <p class="uploaded-section-title">Fotos de Vocês 💕</p>
+        <div class="uploaded-section-header">
+          <p class="uploaded-section-title">Fotos de Vocês 💕</p>
+          <button class="manage-btn" id="manageBtn" onclick="toggleManageMode()">✏️ Gerenciar</button>
+        </div>
         <div class="gallery" id="uploadedGallery"></div>
       </div>
       <div class="gallery" id="gallery"></div>
@@ -183,6 +186,17 @@
 
       <button class="upload-submit-btn" id="uploadSubmitBtn" onclick="submitUpload()">Enviar 💕</button>
       <p id="uploadStatus" class="upload-status"></p>
+    </div>
+  </div>
+
+  <!-- Modal de Edição de Legenda -->
+  <div id="editModal" class="modal-overlay hidden" onclick="closeEditModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:360px">
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+      <h3 class="modal-title">Editar Legenda 💕</h3>
+      <input type="text" id="editCaptionInput" class="upload-input" maxlength="500" placeholder="Nova legenda" />
+      <p id="editStatus" class="upload-status"></p>
+      <button class="upload-submit-btn" id="editSaveBtn" onclick="saveEdit()">Salvar</button>
     </div>
   </div>
 

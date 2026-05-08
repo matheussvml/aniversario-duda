@@ -80,6 +80,13 @@ function requirePin(req, res, next) {
   next()
 }
 
+function requireAuth(req, res, next) {
+  const data = verifyToken(req.headers['x-auth-token'])
+  if (!data) return res.status(401).json({ error: 'Não autorizado' })
+  req.authUser = data.user
+  next()
+}
+
 // GET /api/photos
 app.get('/api/photos', async (_req, res) => {
   res.set('Cache-Control', 'no-store')
@@ -132,8 +139,22 @@ app.post('/api/upload', requirePin, async (req, res) => {
   }
 })
 
+// PUT /api/photos/:id — edita legenda
+app.put('/api/photos/:id', requireAuth, async (req, res) => {
+  const { caption } = req.body
+  if (caption === undefined) return res.status(400).json({ error: 'caption obrigatório' })
+  try {
+    await pool.query('UPDATE uploaded_photos SET caption = ? WHERE id = ?',
+      [(caption || '').slice(0, 500), req.params.id])
+    res.json({ ok: true })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao atualizar foto' })
+  }
+})
+
 // DELETE /api/photos/:id
-app.delete('/api/photos/:id', requirePin, async (req, res) => {
+app.delete('/api/photos/:id', requireAuth, async (req, res) => {
   try {
     const [rows] = await pool.query(
       'SELECT url FROM uploaded_photos WHERE id = ?',
