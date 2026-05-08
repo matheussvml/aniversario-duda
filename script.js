@@ -852,8 +852,82 @@ function updateMusicBtn() {
   btn.title = musicPlaying ? 'Pausar música' : 'Tocar nossa música';
 }
 
+// ── AUTH ──
+var currentUser = null
+
+function getStoredToken() {
+  return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+}
+
+function clearToken() {
+  localStorage.removeItem('auth_token')
+  localStorage.removeItem('auth_user')
+  sessionStorage.removeItem('auth_token')
+  sessionStorage.removeItem('auth_user')
+}
+
+async function checkAuth() {
+  const token = getStoredToken()
+  if (!token) { showLogin(); return }
+  try {
+    const res = await fetch('/api/verify', { headers: { 'x-auth-token': token } })
+    if (!res.ok) { clearToken(); showLogin(); return }
+    const data = await res.json()
+    currentUser = data.user
+    hideLogin()
+  } catch {
+    showLogin()
+  }
+}
+
+function showLogin() {
+  document.getElementById('loginOverlay').classList.remove('hidden')
+}
+
+function hideLogin() {
+  document.getElementById('loginOverlay').classList.add('hidden')
+}
+
+async function doLogin() {
+  const user = document.getElementById('loginUser').value
+  const pass = document.getElementById('loginPass').value
+  const remember = document.getElementById('rememberMe').checked
+  const errEl = document.getElementById('loginError')
+  const btn = document.querySelector('.login-btn')
+
+  errEl.style.display = 'none'
+  if (!user) { errEl.textContent = 'Escolha seu nome.'; errEl.style.display = 'block'; return }
+  if (!pass) { errEl.textContent = 'Digite a senha.'; errEl.style.display = 'block'; return }
+
+  btn.disabled = true
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user, password: pass, rememberMe: remember }),
+    })
+    if (!res.ok) {
+      errEl.textContent = 'Usuário ou senha incorretos.'
+      errEl.style.display = 'block'
+      btn.disabled = false
+      return
+    }
+    const { token } = await res.json()
+    const storage = remember ? localStorage : sessionStorage
+    storage.setItem('auth_token', token)
+    storage.setItem('auth_user', user)
+    currentUser = user
+    hideLogin()
+  } catch {
+    errEl.textContent = 'Erro de conexão. Tente novamente.'
+    errEl.style.display = 'block'
+    btn.disabled = false
+  }
+}
+
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', function() {
+  checkAuth()
   initCounter();
   initPetals();
   buildTimeline();

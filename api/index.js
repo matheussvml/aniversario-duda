@@ -1,10 +1,41 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') })
 
 const express = require('express')
+const crypto = require('crypto')
 const { S3Client, DeleteObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3')
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner')
 const path = require('path')
 const pool = require('../lib/db')
+
+const USERS = {
+  Matheus: process.env.MATHEUS_PASSWORD,
+  Duda: process.env.DUDA_PASSWORD,
+}
+
+function makeToken(user, rememberMe) {
+  const days = rememberMe ? 30 : 1
+  const exp = Date.now() + days * 24 * 60 * 60 * 1000
+  const payload = Buffer.from(JSON.stringify({ user, exp })).toString('base64url')
+  const sig = crypto.createHmac('sha256', process.env.JWT_SECRET || 'dev').update(payload).digest('hex')
+  return `${payload}.${sig}`
+}
+
+function verifyToken(token) {
+  if (!token) return null
+  const dot = token.lastIndexOf('.')
+  if (dot === -1) return null
+  const payload = token.slice(0, dot)
+  const sig = token.slice(dot + 1)
+  try {
+    const expected = crypto.createHmac('sha256', process.env.JWT_SECRET || 'dev').update(payload).digest('hex')
+    const sigBuf = Buffer.from(sig, 'hex')
+    const expBuf = Buffer.from(expected, 'hex')
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return null
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString())
+    if (data.exp < Date.now()) return null
+    return data
+  } catch { return null }
+}
 
 const app = express()
 app.use(express.json())
@@ -23,6 +54,22 @@ const s3 = new S3Client({
   },
   requestChecksumCalculation: 'WHEN_REQUIRED',
   responseChecksumValidation: 'WHEN_REQUIRED',
+})
+
+// POST /api/login
+app.post('/api/login', (req, res) => {
+  const { user, password, rememberMe } = req.body
+  if (!USERS[user] || USERS[user] !== password) {
+    return res.status(401).json({ error: 'Usuário ou senha incorretos' })
+  }
+  res.json({ token: makeToken(user, !!rememberMe), user })
+})
+
+// GET /api/verify
+app.get('/api/verify', (req, res) => {
+  const data = verifyToken(req.headers['x-auth-token'])
+  if (!data) return res.status(401).json({ error: 'Token inválido' })
+  res.json({ user: data.user })
 })
 
 function requirePin(req, res, next) {

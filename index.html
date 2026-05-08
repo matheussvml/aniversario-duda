@@ -11,6 +11,27 @@
 </head>
 <body>
 
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-heart">💕</div>
+      <h2 class="login-title">Nosso Cantinho</h2>
+      <p class="login-sub">Só pra nós dois.</p>
+      <select id="loginUser" class="login-input">
+        <option value="">Quem é você?</option>
+        <option value="Matheus">Matheus</option>
+        <option value="Duda">Duda</option>
+      </select>
+      <input type="password" id="loginPass" class="login-input" placeholder="Senha"
+             onkeydown="if(event.key==='Enter')doLogin()" />
+      <label class="login-remember">
+        <input type="checkbox" id="rememberMe" checked />
+        <span>Lembrar de mim</span>
+      </label>
+      <p id="loginError" class="login-error" style="display:none">Usuário ou senha incorretos.</p>
+      <button class="login-btn" onclick="doLogin()">Entrar 💕</button>
+    </div>
+  </div>
+
   <button class="music-btn" id="musicBtn" onclick="toggleMusic()" title="Tocar nossa música" aria-label="Tocar nossa música">
     <span id="musicIcon">♪</span>
   </button>
