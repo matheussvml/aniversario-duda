@@ -710,7 +710,7 @@ function buildUploadedGallery(photos) {
     el.dataset.filename = p.filename || p.url.split('/').pop()
 
     const badge = '<span class="upload-badge">' + p.uploaded_by + '</span>'
-    const dlBtn = '<button class="gal-dl-btn" onclick="downloadPhoto(event,this)" title="Baixar">⬇️</button>'
+    const dlBtn = '<button class="gal-dl-btn" onclick="downloadPhoto(event,this)" title="Baixar">⬇ Baixar</button>'
     const actions =
       '<div class="gal-manage-actions">' +
         '<button class="gal-action-btn edit" onclick="openEditModal(event,' + p.id + ',this)" title="Editar legenda">✏️</button>' +
