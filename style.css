@@ -1009,13 +1009,9 @@ body {
   box-shadow: 0 3px 10px rgba(0,0,0,0.3);
   backdrop-filter: blur(4px);
   z-index: 5;
-  opacity: 0;
-  transform: translateY(5px);
-  transition: opacity 0.22s, transform 0.22s, box-shadow 0.22s;
+  transition: box-shadow 0.22s;
 }
-.gal-item:hover .gal-dl-btn { opacity: 1; transform: translateY(0); }
 .gal-dl-btn:hover { box-shadow: 0 5px 16px rgba(0,0,0,0.38); }
-@media (hover: none) { .gal-dl-btn { opacity: 1; transform: none; } }
 
 /* ── LOGIN OVERLAY ── */
 .login-overlay {
