@@ -664,11 +664,21 @@ async function submitUpload() {
 
     for (const file of Array.from(files)) {
       try {
-        await upload(file.name, file, {
+        const safeName = Date.now() + '-' + file.name
+        const blob = await upload(safeName, file, {
           access: 'public',
           handleUploadUrl: '/api/upload',
-          clientPayload: JSON.stringify({ pin, caption, uploadedBy }),
+          clientPayload: JSON.stringify({ pin }),
         })
+
+        // Salva metadados explicitamente no MySQL após o blob confirmar o upload
+        const saveRes = await fetch('/api/photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-upload-pin': pin },
+          body: JSON.stringify({ url: blob.url, filename: file.name, caption, uploaded_by: uploadedBy }),
+        })
+        if (!saveRes.ok) throw new Error('Erro ao salvar metadados')
+
         successCount++
       } catch (e) {
         if (e.message && e.message.toLowerCase().includes('pin')) {

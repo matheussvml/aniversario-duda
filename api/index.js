@@ -36,7 +36,23 @@ app.get('/api/photos', async (_req, res) => {
   }
 })
 
-// POST /api/upload — client-side upload (arquivo vai direto do browser ao Blob, não passa pela função)
+// POST /api/photos — salva metadados após upload concluído pelo cliente (exige PIN)
+app.post('/api/photos', requirePin, async (req, res) => {
+  const { url, filename, caption, uploaded_by } = req.body
+  if (!url) return res.status(400).json({ error: 'URL obrigatória' })
+  try {
+    await pool.query(
+      'INSERT INTO uploaded_photos (filename, url, caption, uploaded_by) VALUES (?, ?, ?, ?)',
+      [filename || url, url, (caption || '').slice(0, 500), uploaded_by === 'Duda' ? 'Duda' : 'Matheus']
+    )
+    res.json({ ok: true })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao salvar foto' })
+  }
+})
+
+// POST /api/upload — gera token para upload direto do browser ao Vercel Blob
 app.post('/api/upload', async (req, res) => {
   try {
     const jsonResponse = await handleUpload({
@@ -53,19 +69,9 @@ app.post('/api/upload', async (req, res) => {
             'video/mp4', 'video/quicktime', 'video/webm',
           ],
           maximumSizeInBytes: 100 * 1024 * 1024,
-          tokenPayload: JSON.stringify({
-            caption:    (payload.caption || '').slice(0, 500),
-            uploadedBy: payload.uploadedBy === 'Duda' ? 'Duda' : 'Matheus',
-          }),
         }
       },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
-        const payload = JSON.parse(tokenPayload || '{}')
-        await pool.query(
-          'INSERT INTO uploaded_photos (filename, url, caption, uploaded_by) VALUES (?, ?, ?, ?)',
-          [blob.pathname, blob.url, payload.caption || '', payload.uploadedBy || 'Matheus']
-        )
-      },
+      onUploadCompleted: async () => {},
     })
     return res.json(jsonResponse)
   } catch (e) {
