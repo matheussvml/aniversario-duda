@@ -69,7 +69,10 @@
       <div class="section-head">
         <h2>Nossa História</h2>
         <p class="section-sub">Cada momento que fez parte de nós</p>
+        <div class="tl-head-btns">
         <button class="manage-btn" id="tlManageBtn" onclick="toggleTlManageMode()">✏️ Gerenciar</button>
+        <button class="manage-btn" id="tlNewEventBtn" onclick="openNewEventModal()" style="display:none">➕ Novo Ramo</button>
+      </div>
       </div>
       <div class="timeline" id="timeline"></div>
     </section>
@@ -199,6 +202,41 @@
       <input type="text" id="editCaptionInput" class="upload-input" maxlength="500" placeholder="Nova legenda" />
       <p id="editStatus" class="upload-status"></p>
       <button class="upload-submit-btn" id="editSaveBtn" onclick="saveEdit()">Salvar</button>
+    </div>
+  </div>
+
+  <!-- Modal Novo Ramo -->
+  <div id="newEventModal" class="modal-overlay hidden" onclick="closeNewEventModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeNewEventModal()">✕</button>
+      <h3 class="modal-title">Novo Ramo 💕</h3>
+      <div style="display:flex;gap:0.5rem">
+        <input type="text" id="newEventEmoji" class="upload-input" maxlength="5" placeholder="💕" style="width:70px;flex-shrink:0;text-align:center">
+        <input type="text" id="newEventDate" class="upload-input" style="flex:1" placeholder="Ex: 08 de Maio de 2026">
+      </div>
+      <input type="date" id="newEventSortDate" class="upload-input" title="Data para ordenar na timeline">
+      <input type="text" id="newEventTitle" class="upload-input" maxlength="200" placeholder="Título do momento">
+      <textarea id="newEventDesc" class="upload-input" maxlength="1000" placeholder="Descrição (opcional)" rows="3" style="resize:vertical"></textarea>
+      <input type="password" id="newEventPin" class="upload-input" placeholder="PIN de acesso">
+      <button class="upload-submit-btn" id="newEventSubmitBtn" onclick="submitNewEvent()">Criar Ramo 💕</button>
+      <p id="newEventStatus" class="upload-status"></p>
+    </div>
+  </div>
+
+  <!-- Modal Editar Ramo -->
+  <div id="editEventModal" class="modal-overlay hidden" onclick="closeEditEventModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeEditEventModal()">✕</button>
+      <h3 class="modal-title">Editar Ramo 💕</h3>
+      <div style="display:flex;gap:0.5rem">
+        <input type="text" id="editEventEmoji" class="upload-input" maxlength="5" style="width:70px;flex-shrink:0;text-align:center">
+        <input type="text" id="editEventDate" class="upload-input" style="flex:1" placeholder="Ex: 08 de Maio de 2026">
+      </div>
+      <input type="date" id="editEventSortDate" class="upload-input">
+      <input type="text" id="editEventTitle" class="upload-input" maxlength="200" placeholder="Título">
+      <textarea id="editEventDesc" class="upload-input" maxlength="1000" rows="3" style="resize:vertical"></textarea>
+      <p id="editEventStatus" class="upload-status"></p>
+      <button class="upload-submit-btn" id="editEventSubmitBtn" onclick="submitEditEvent()">Salvar 💕</button>
     </div>
   </div>
 

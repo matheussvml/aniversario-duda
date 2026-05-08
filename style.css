@@ -391,6 +391,22 @@ body {
 
 #timeline.tl-manage-mode .tl-add-btn { display: block; }
 #timeline.tl-manage-mode .gal-manage-actions { display: flex; }
+#timeline.tl-manage-mode .tl-event-actions { display: flex; }
+
+.tl-head-btns {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.tl-event-actions {
+  display: none;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
 
 .tl-upload-info {
   font-size: 0.82rem;

@@ -228,6 +228,7 @@ let currentQuizOptions = [];
 let currentQuizCorrect = 0;
 let musicPlaying = false;
 var tlExtraPhotos = {};
+var tlDynamicEvents = [];
 var tlManageMode = false;
 var tlUploadKey = null;
 var editingType = 'uploaded';
@@ -352,6 +353,36 @@ const PHOTO_BLOB_URLS = {
 
 function isVideo(f) { return /\.(mp4|webm|mov)$/i.test(f); }
 
+var PT_MONTHS = {
+  'janeiro': 0, 'fevereiro': 1, 'março': 2, 'abril': 3, 'maio': 4, 'junho': 5,
+  'julho': 6, 'agosto': 7, 'setembro': 8, 'outubro': 9, 'novembro': 10, 'dezembro': 11
+};
+
+function parseTlDate(dateStr) {
+  if (!dateStr) return Infinity;
+  var clean = dateStr.split('–')[0].trim();
+  var m = clean.match(/(\d+)\s+de\s+(\w+)\s+de\s+(\d+)/i);
+  if (!m) return Infinity;
+  var month = PT_MONTHS[m[2].toLowerCase()];
+  if (month === undefined) return Infinity;
+  return new Date(parseInt(m[3]), month, parseInt(m[1])).getTime();
+}
+
+function getMergedTimeline() {
+  var all = [];
+  timelineData.forEach(function(item, i) {
+    all.push({ date: item.date, emoji: item.emoji, title: item.title, desc: item.desc, photos: item.photos,
+      _key: String(i), _sortTs: parseTlDate(item.date), _dynamic: false });
+  });
+  tlDynamicEvents.forEach(function(ev) {
+    var sortTs = ev.sort_date ? new Date(ev.sort_date.slice(0, 10) + 'T12:00:00').getTime() : Infinity;
+    all.push({ date: ev.date_label, emoji: ev.emoji || '💕', title: ev.title, desc: ev.description || '', photos: [],
+      _key: 'e-' + ev.id, _sortTs: sortTs, _dynamic: true, _evId: ev.id });
+  });
+  all.sort(function(a, b) { return a._sortTs - b._sortTs; });
+  return all;
+}
+
 function src(filename) {
   return PHOTO_BLOB_URLS[filename] || 'photos-3-001/' + encodeURIComponent(filename);
 }
@@ -409,13 +440,14 @@ function buildTimeline() {
   const container = document.getElementById('timeline');
   container.dataset.built = '1';
   container.innerHTML = '';
-  timelineData.forEach(function(item, i) {
-    container.appendChild(buildTlItem(item, i));
+  getMergedTimeline().forEach(function(item) {
+    container.appendChild(buildTlItem(item));
   });
   if (tlManageMode) container.classList.add('tl-manage-mode');
 }
 
-function buildTlItem(item, i) {
+function buildTlItem(item) {
+  var key = item._key;
   const el = document.createElement('div');
   el.className = 'tl-item';
 
@@ -426,17 +458,27 @@ function buildTlItem(item, i) {
     photosHtml = '<div class="tl-photos">';
     item.photos.forEach(function(f, fi) {
       if (isVideo(f)) {
-        photosHtml += '<div class="tl-vid-thumb" onclick="openLb(\'tl-' + i + '\',' + fi + ')">▶️</div>';
+        photosHtml += '<div class="tl-vid-thumb" onclick="openLb(\'tl-' + key + '\',' + fi + ')">▶️</div>';
       } else {
-        photosHtml += '<img class="tl-thumb" src="' + src(f) + '" loading="lazy" onclick="openLb(\'tl-' + i + '\',' + fi + ')" alt="">';
+        photosHtml += '<img class="tl-thumb" src="' + src(f) + '" loading="lazy" onclick="openLb(\'tl-' + key + '\',' + fi + ')" alt="">';
       }
     });
     photosHtml += '</div>';
   }
 
+  var eventActionsHtml = '';
+  if (item._dynamic) {
+    eventActionsHtml =
+      '<div class="tl-event-actions">' +
+        '<button class="gal-action-btn edit" onclick="openEditEventModal(' + item._evId + ')" title="Editar ramo">✏️</button>' +
+        '<button class="gal-action-btn del" onclick="deleteEventFromTimeline(' + item._evId + ')" title="Excluir ramo">🗑️</button>' +
+      '</div>';
+  }
+
   el.innerHTML =
     '<div class="tl-dot">' + item.emoji + '</div>' +
     '<div class="tl-card">' +
+      eventActionsHtml +
       '<p class="tl-date">' + item.date + '</p>' +
       '<h3 class="tl-title">' + item.title + '</h3>' +
       (item.desc ? '<p class="tl-desc">' + item.desc + '</p>' : '') +
@@ -446,7 +488,7 @@ function buildTlItem(item, i) {
   const card = el.querySelector('.tl-card');
 
   // Extra photos from DB
-  const extras = tlExtraPhotos[String(i)] || [];
+  const extras = tlExtraPhotos[key] || [];
   const baseIdx = item.photos.length;
   if (extras.length) {
     const extraDiv = document.createElement('div');
@@ -468,11 +510,11 @@ function buildTlItem(item, i) {
         '</div>';
       if (isVid) {
         thumb.innerHTML =
-          '<div class="gal-vid-cover tl-vid-cover" onclick="openLb(\'tl-' + i + '\',' + lbIdx + ')"><span>▶️</span></div>' +
+          '<div class="gal-vid-cover tl-vid-cover" onclick="openLb(\'tl-' + key + '\',' + lbIdx + ')"><span>▶️</span></div>' +
           dlBtn + mActions;
       } else {
         thumb.innerHTML =
-          '<img src="' + p.url + '" loading="lazy" alt="" onclick="openLb(\'tl-' + i + '\',' + lbIdx + ')">' +
+          '<img src="' + p.url + '" loading="lazy" alt="" onclick="openLb(\'tl-' + key + '\',' + lbIdx + ')">' +
           dlBtn + mActions;
       }
       extraDiv.appendChild(thumb);
@@ -484,7 +526,7 @@ function buildTlItem(item, i) {
   const addBtn = document.createElement('button');
   addBtn.className = 'tl-add-btn';
   addBtn.textContent = '+ Adicionar foto';
-  addBtn.onclick = function() { openTlUploadModal(i); };
+  addBtn.onclick = function() { openTlUploadModal(key, item.title, item.date); };
   card.appendChild(addBtn);
 
   // Register lightbox items
@@ -494,7 +536,7 @@ function buildTlItem(item, i) {
   const extraLb = extras.map(function(p) {
     return { file: p.url, caption: (p.caption || item.title) + ', ' + item.date, isRemote: true };
   });
-  lbItems['tl-' + i] = hardcoded.concat(extraLb);
+  lbItems['tl-' + key] = hardcoded.concat(extraLb);
 
   return el;
 }
@@ -503,22 +545,29 @@ function refreshTimeline() {
   const container = document.getElementById('timeline');
   if (!container.dataset.built) return;
   container.innerHTML = '';
-  timelineData.forEach(function(item, i) {
-    container.appendChild(buildTlItem(item, i));
+  getMergedTimeline().forEach(function(item) {
+    container.appendChild(buildTlItem(item));
   });
   if (tlManageMode) container.classList.add('tl-manage-mode');
 }
 
 async function loadTimelinePhotos() {
   try {
-    const res = await fetch('/api/timeline-photos');
-    if (!res.ok) return;
-    const photos = await res.json();
-    tlExtraPhotos = {};
-    photos.forEach(function(p) {
-      if (!tlExtraPhotos[p.timeline_key]) tlExtraPhotos[p.timeline_key] = [];
-      tlExtraPhotos[p.timeline_key].push(p);
-    });
+    const [photosRes, eventsRes] = await Promise.all([
+      fetch('/api/timeline-photos'),
+      fetch('/api/timeline-events'),
+    ]);
+    if (photosRes.ok) {
+      const photos = await photosRes.json();
+      tlExtraPhotos = {};
+      photos.forEach(function(p) {
+        if (!tlExtraPhotos[p.timeline_key]) tlExtraPhotos[p.timeline_key] = [];
+        tlExtraPhotos[p.timeline_key].push(p);
+      });
+    }
+    if (eventsRes.ok) {
+      tlDynamicEvents = await eventsRes.json();
+    }
     refreshTimeline();
   } catch (_) {}
 }
@@ -527,19 +576,21 @@ function toggleTlManageMode() {
   tlManageMode = !tlManageMode;
   const container = document.getElementById('timeline');
   const btn = document.getElementById('tlManageBtn');
+  const newBtn = document.getElementById('tlNewEventBtn');
   container.classList.toggle('tl-manage-mode', tlManageMode);
   btn.classList.toggle('active', tlManageMode);
   btn.textContent = tlManageMode ? '✅ Concluir' : '✏️ Gerenciar';
+  newBtn.style.display = tlManageMode ? '' : 'none';
 }
 
-function openTlUploadModal(i) {
-  tlUploadKey = String(i);
+function openTlUploadModal(key, title, date) {
+  tlUploadKey = key;
   document.getElementById('uploadModal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   resetUploadForm();
   var infoEl = document.getElementById('tlUploadInfo');
   infoEl.style.display = 'block';
-  infoEl.textContent = '📍 Adicionando a: ' + timelineData[i].title + ' (' + timelineData[i].date + ')';
+  infoEl.textContent = '📍 Adicionando a: ' + title + ' (' + date + ')';
 }
 
 function openTlEditModal(e, id, btn) {
@@ -559,6 +610,135 @@ async function deleteTlPhoto(e, id) {
   if (!confirm('Excluir esta foto?')) return;
   try {
     const res = await fetch('/api/timeline-photos/' + id, {
+      method: 'DELETE',
+      headers: { 'x-auth-token': getStoredToken() },
+    });
+    if (!res.ok) throw new Error();
+    await loadTimelinePhotos();
+  } catch {
+    alert('Erro ao excluir. Tente novamente.');
+  }
+}
+
+// ── TIMELINE EVENTS CRUD ──
+var editingEventId = null;
+
+function openNewEventModal() {
+  document.getElementById('newEventEmoji').value = '';
+  document.getElementById('newEventDate').value = '';
+  document.getElementById('newEventSortDate').value = '';
+  document.getElementById('newEventTitle').value = '';
+  document.getElementById('newEventDesc').value = '';
+  document.getElementById('newEventPin').value = '';
+  document.getElementById('newEventStatus').textContent = '';
+  document.getElementById('newEventSubmitBtn').disabled = false;
+  document.getElementById('newEventModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeNewEventModal(e) {
+  if (e && e.target !== document.getElementById('newEventModal')) return;
+  document.getElementById('newEventModal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+async function submitNewEvent() {
+  const emoji = document.getElementById('newEventEmoji').value.trim() || '💕';
+  const date_label = document.getElementById('newEventDate').value.trim();
+  const sort_date = document.getElementById('newEventSortDate').value;
+  const title = document.getElementById('newEventTitle').value.trim();
+  const description = document.getElementById('newEventDesc').value.trim();
+  const pin = document.getElementById('newEventPin').value.trim();
+  const status = document.getElementById('newEventStatus');
+  const btn = document.getElementById('newEventSubmitBtn');
+
+  if (!date_label) { status.textContent = 'Informe a data.'; return; }
+  if (!title) { status.textContent = 'Informe o título.'; return; }
+  if (!pin) { status.textContent = 'Informe o PIN.'; return; }
+
+  btn.disabled = true;
+  status.textContent = 'Criando...';
+  try {
+    const res = await fetch('/api/timeline-events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-upload-pin': pin },
+      body: JSON.stringify({ emoji, date_label, sort_date: sort_date || null, title, description }),
+    });
+    if (res.status === 401) { status.textContent = 'PIN incorreto.'; btn.disabled = false; return; }
+    if (!res.ok) throw new Error();
+    status.textContent = 'Ramo criado! 💕';
+    await loadTimelinePhotos();
+    setTimeout(function() {
+      document.getElementById('newEventModal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }, 1000);
+  } catch {
+    status.textContent = 'Erro ao criar. Tente novamente.';
+    btn.disabled = false;
+  }
+}
+
+function openEditEventModal(evId) {
+  const ev = tlDynamicEvents.find(function(e) { return e.id === evId; });
+  if (!ev) return;
+  editingEventId = evId;
+  document.getElementById('editEventEmoji').value = ev.emoji || '💕';
+  document.getElementById('editEventDate').value = ev.date_label || '';
+  document.getElementById('editEventSortDate').value = ev.sort_date ? ev.sort_date.slice(0, 10) : '';
+  document.getElementById('editEventTitle').value = ev.title || '';
+  document.getElementById('editEventDesc').value = ev.description || '';
+  document.getElementById('editEventStatus').textContent = '';
+  document.getElementById('editEventSubmitBtn').disabled = false;
+  document.getElementById('editEventModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditEventModal(e) {
+  if (e && e.target !== document.getElementById('editEventModal')) return;
+  document.getElementById('editEventModal').classList.add('hidden');
+  document.body.style.overflow = '';
+  editingEventId = null;
+}
+
+async function submitEditEvent() {
+  if (!editingEventId) return;
+  const emoji = document.getElementById('editEventEmoji').value.trim() || '💕';
+  const date_label = document.getElementById('editEventDate').value.trim();
+  const sort_date = document.getElementById('editEventSortDate').value;
+  const title = document.getElementById('editEventTitle').value.trim();
+  const description = document.getElementById('editEventDesc').value.trim();
+  const status = document.getElementById('editEventStatus');
+  const btn = document.getElementById('editEventSubmitBtn');
+
+  if (!date_label) { status.textContent = 'Informe a data.'; return; }
+  if (!title) { status.textContent = 'Informe o título.'; return; }
+
+  btn.disabled = true;
+  status.textContent = 'Salvando...';
+  try {
+    const res = await fetch('/api/timeline-events/' + editingEventId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': getStoredToken() },
+      body: JSON.stringify({ emoji, date_label, sort_date: sort_date || null, title, description }),
+    });
+    if (!res.ok) throw new Error();
+    status.textContent = 'Salvo! 💕';
+    await loadTimelinePhotos();
+    setTimeout(function() {
+      document.getElementById('editEventModal').classList.add('hidden');
+      document.body.style.overflow = '';
+      editingEventId = null;
+    }, 800);
+  } catch {
+    status.textContent = 'Erro ao salvar.';
+    btn.disabled = false;
+  }
+}
+
+async function deleteEventFromTimeline(evId) {
+  if (!confirm('Excluir este ramo e todas as fotos dele?')) return;
+  try {
+    const res = await fetch('/api/timeline-events/' + evId, {
       method: 'DELETE',
       headers: { 'x-auth-token': getStoredToken() },
     });

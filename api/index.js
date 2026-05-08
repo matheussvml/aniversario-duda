@@ -235,6 +235,70 @@ app.delete('/api/timeline-photos/:id', requireAuth, async (req, res) => {
   }
 })
 
+// GET /api/timeline-events
+app.get('/api/timeline-events', async (_req, res) => {
+  res.set('Cache-Control', 'no-store')
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, date_label, emoji, title, description, sort_date FROM timeline_events ORDER BY sort_date ASC, created_at ASC'
+    )
+    res.json(rows)
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao buscar eventos' })
+  }
+})
+
+// POST /api/timeline-events (requirePin)
+app.post('/api/timeline-events', requirePin, async (req, res) => {
+  const { date_label, emoji, title, description, sort_date } = req.body
+  if (!date_label || !title) return res.status(400).json({ error: 'date_label e title obrigatórios' })
+  try {
+    const [result] = await pool.query(
+      'INSERT INTO timeline_events (date_label, emoji, title, description, sort_date) VALUES (?, ?, ?, ?, ?)',
+      [date_label.slice(0, 100), (emoji || '💕').slice(0, 10), title.slice(0, 200), (description || '').slice(0, 1000), sort_date || null]
+    )
+    res.json({ ok: true, id: result.insertId })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao criar evento' })
+  }
+})
+
+// PUT /api/timeline-events/:id (requireAuth)
+app.put('/api/timeline-events/:id', requireAuth, async (req, res) => {
+  const { date_label, emoji, title, description, sort_date } = req.body
+  if (!date_label || !title) return res.status(400).json({ error: 'date_label e title obrigatórios' })
+  try {
+    await pool.query(
+      'UPDATE timeline_events SET date_label=?, emoji=?, title=?, description=?, sort_date=? WHERE id=?',
+      [date_label.slice(0, 100), (emoji || '💕').slice(0, 10), title.slice(0, 200), (description || '').slice(0, 1000), sort_date || null, req.params.id]
+    )
+    res.json({ ok: true })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao atualizar evento' })
+  }
+})
+
+// DELETE /api/timeline-events/:id (requireAuth)
+app.delete('/api/timeline-events/:id', requireAuth, async (req, res) => {
+  try {
+    const key = 'e-' + req.params.id
+    const [photos] = await pool.query('SELECT url FROM timeline_photos WHERE timeline_key = ?', [key])
+    for (const photo of photos) {
+      const photoKey = photo.url.replace(`${process.env.R2_PUBLIC_URL}/`, '')
+      await s3.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: photoKey }))
+    }
+    await pool.query('DELETE FROM timeline_photos WHERE timeline_key = ?', [key])
+    await pool.query('DELETE FROM timeline_events WHERE id = ?', [req.params.id])
+    res.json({ ok: true })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Erro ao deletar evento' })
+  }
+})
+
 if (require.main === module) {
   const PORT = process.env.PORT || 3000
   app.listen(PORT, () => {
