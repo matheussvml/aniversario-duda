@@ -715,11 +715,16 @@ function toggleMusic() {
   if (musicPlaying) {
     audio.pause();
     musicPlaying = false;
+    updateMusicBtn();
   } else {
-    audio.play();
-    musicPlaying = true;
+    audio.play().then(function() {
+      musicPlaying = true;
+      updateMusicBtn();
+    }).catch(function() {
+      musicPlaying = false;
+      updateMusicBtn();
+    });
   }
-  updateMusicBtn();
 }
 
 function updateMusicBtn() {
